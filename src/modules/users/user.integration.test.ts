@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import {
   createUserService,
   getUserByIdService,
@@ -6,22 +6,8 @@ import {
   updateUserService,
   deleteUserService,
 } from './user.service';
-import prisma from '../../database/prisma';
-
-async function cleanUsers() {
-  await prisma.task.deleteMany();
-  await prisma.user.deleteMany();
-}
 
 describe('user service (integration)', () => {
-  beforeEach(async () => {
-    await cleanUsers();
-  });
-
-  afterEach(async () => {
-    await cleanUsers();
-  });
-
   describe('createUserService', () => {
     it('should create a user and return it', async () => {
       const user = await createUserService({

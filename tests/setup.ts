@@ -9,18 +9,17 @@ dotenv.config({ path: '.env.test' });
 
 const prisma = new PrismaClient();
 
-export async function cleanDb() {
-  await prisma.task.deleteMany();
-  await prisma.user.deleteMany();
-}
-
 beforeAll(async () => {
   execSync('npx prisma migrate deploy', { stdio: 'inherit', env: { ...process.env, NODE_ENV: 'test' } });
   await prisma.$connect();
 });
 
+// Truncate both tables after every test so each test starts with a clean
+// database, regardless of which test file ran before it.
 afterEach(async () => {
-  await cleanDb();
+  await prisma.$executeRawUnsafe(
+    'TRUNCATE TABLE "tasks", "users" RESTART IDENTITY CASCADE;',
+  );
 });
 
 afterAll(async () => {
