@@ -23,4 +23,5 @@ jobs:
           script: |
             cd ${{ secrets.VPS_APP_DIR }}
             git pull origin master
-            npm ci --production
+            npm ci --production --ignore-scripts
+            npx prisma generate
