@@ -86,22 +86,22 @@ Deliberately excluded:
 
 ## 3. Technical Stack
 
-Document the technologies actually selected and used.
+Technologies selected and used:
 
 | Component | Technology | Purpose |
 |-----------|------------|---------|
 | Runtime | Node.js | Application runtime |
-| Language | TypeScript | Application development |
-| Framework | TBD | HTTP server and routing |
-| Database | TBD | Persistent storage |
-| ORM | TBD | Database access and migrations |
-| Validation | TBD | Request validation |
-| Testing | TBD | Automated tests |
-| API documentation | TBD | OpenAPI/Swagger |
+| Language | TypeScript | Type-safe application development |
+| HTTP framework | Express | REST API server and routing |
+| Database | PostgreSQL | Relational data persistence |
+| ORM | Prisma | Database access, schema management, migrations |
+| Validation | Zod | Request and data validation |
+| Testing | Vitest | Automated unit, integration, and API/HTTP tests |
+| API documentation | OpenAPI / Swagger | Interactive API contract documentation |
 | CI/CD | GitHub Actions | Automated verification and deployment |
-| Hosting | Debian 13 VPS | Public demonstration |
-
-Include relevant version information where useful.
+| Hosting | Debian 13 VPS | Public demonstration environment |
+| Process management | systemd | Application process management |
+| Reverse proxy | Apache | HTTPS termination and request forwarding |
 
 ---
 
@@ -109,41 +109,133 @@ Include relevant version information where useful.
 
 ### 4.1 Application Architecture
 
-Explain the selected architectural approach and the responsibilities of the main application layers.
+Layered architecture within a modular monolith — a single deployable service with clear separation of responsibilities across layers:
+
+- HTTP routing and request handling.
+- Request validation at the API boundary.
+- Business logic.
+- Data persistence.
+- Database configuration.
+- Error handling.
+- Application configuration.
+
+Microservices, distributed systems, event-driven architectures, CQRS, and complex hexagonal patterns are deliberately avoided as disproportionate to the project scope.
 
 ### 4.2 Project Structure
 
-Document the directory structure and explain the purpose of its important directories and modules.
+```
+src/
+├── app.ts
+├── server.ts
+│
+├── config/
+│   └── env.ts
+│
+├── modules/
+│   └── tasks/
+│       ├── task.routes.ts
+│       ├── task.controller.ts
+│       ├── task.service.ts
+│       ├── task.repository.ts
+│       ├── task.validation.ts
+│       └── task.types.ts
+│
+├── database/
+│   └── prisma.ts
+│
+├── middleware/
+│   ├── error-handler.ts
+│   └── not-found.ts
+│
+└── shared/
+    └── errors/
+```
+
+Component responsibilities:
+
+| Component | Responsibility |
+|-----------|----------------|
+| `app.ts` | Creates and configures the Express application |
+| `server.ts` | Starts the HTTP server |
+| `config/` | Application configuration and environment validation |
+| `routes` | Defines API endpoints and connects them to controllers |
+| `controllers` | Handles HTTP requests and constructs HTTP responses (no business logic) |
+| `services` | Implements business rules (no Express-specific dependencies) |
+| `repositories` | Encapsulates database access via Prisma |
+| `validation` | Defines Zod request validation schemas |
+| `database/` | Provides Prisma client configuration |
+| `middleware/` | Centralized error handling and shared HTTP concerns |
+| `shared/` | Genuinely reusable application components |
 
 ### 4.3 Data Model
 
-Describe the Task entity, its attributes, constraints, and relationships.
-
-Include an ER diagram if appropriate.
+To be defined in Phase 3.
 
 ### 4.4 API Design
 
-Document:
-
-- Available endpoints.
-- HTTP methods.
-- URL parameters.
-- Query parameters.
-- Request schemas.
-- Response schemas.
-- HTTP status codes.
-
-Include representative request and response examples.
+To be defined in Phase 3.
 
 ### 4.5 Validation and Error Handling
 
-Explain the validation strategy and the format used for error responses.
+Validation performed at the application boundary using Zod schemas covering task creation, updates, path parameters, filtering, and pagination parameters.
+
+Centralized error-handling strategy with consistent structure:
+
+```json
+{
+  "error": {
+    "code": "VALIDATION_ERROR",
+    "message": "Request validation failed",
+    "details": []
+  }
+}
+```
+
+Distinguishes validation errors, invalid parameters, missing resources, database constraint violations, connectivity failures, and unexpected errors. No stack traces, credentials, or internal details exposed to API consumers.
 
 ### 4.6 Architectural Decisions
 
-Record significant technical decisions and their rationale.
+| Decision | Chosen Option | Alternatives Considered | Rationale |
+|----------|---------------|------------------------|-----------|
+| HTTP framework | Express | NestJS | Express is lightweight and appropriate for this assessment scope; NestJS adds abstraction layers and conventions disproportionate to a small CRUD API. |
+| Relational database | PostgreSQL | SQLite | PostgreSQL is production-oriented and consistent across development, testing, and production. SQLite would require engine switching for the public VPS deployment, introducing avoidable compatibility considerations. |
+| ORM / database access | Prisma | Raw SQL, TypeORM, Sequelize | Prisma provides a typed client and built-in migration support with minimal boilerplate. Raw SQL loses type safety; heavier ORMs add unnecessary abstraction for this scope. |
+| Validation library | Zod | Joi, Yup, manual validation | Zod offers explicit schemas with first-class TypeScript integration and static type inference. Joi/Yup add an extra abstraction layer; manual validation is error-prone and inconsistent. |
+| Testing framework | Vitest | Jest, Mocha | Vitest is fast, modern, and provides built-in coverage reporting. Jest is a valid alternative but slightly heavier; Mocha requires additional setup for assertions and mocking. |
+| Application structure | Layered modular monolith | Microservices, event-driven, CQRS, hexagonal | A modular monolith provides sufficient separation of concerns without the operational and conceptual overhead of distributed architectures, which are unjustified for a single-resource CRUD API. |
+| Reverse proxy | Apache | Nginx | Apache is already available on the existing Debian 13 VPS; using it avoids introducing and managing a new web server. |
+| Process management | systemd | PM2, Docker | systemd is standard on Debian 13 and requires no additional runtime; PM2 and Docker add operational layers not needed for a single service. |
 
-Prefer concise explanations of why a particular approach was selected over reasonable alternatives.
+### 4.7 Dependencies and External Components
+
+**Production dependencies:**
+
+| Component | Purpose |
+|-----------|---------|
+| `express` | HTTP server and routing |
+| `typescript` | Type-safe application development |
+| `@prisma/client` | Typed database client |
+| `zod` | Request and data validation |
+
+**Development dependencies:**
+
+| Component | Purpose |
+|-----------|---------|
+| `prisma` | Schema definition, migrations, and client generation |
+| `vitest` | Automated testing and coverage reporting |
+| `ts-node` / `tsx` | TypeScript execution during development |
+| `nodemon` | Development server auto-restart |
+| `@types/*` | TypeScript type definitions for Node.js and Express |
+
+**External components and infrastructure:**
+
+| Component | Purpose | Ownership |
+|-----------|---------|-----------|
+| PostgreSQL database | Persistent data storage | Dedicated database on Debian 13 VPS |
+| Apache reverse proxy | HTTPS termination and request forwarding | Existing VPS infrastructure |
+| systemd | Application process management | Debian 13 VPS |
+| GitHub Actions | CI/CD automation | GitHub (free tier) |
+| GitHub repository | Source control and public demonstration | Public GitHub repo |
 
 ---
 
