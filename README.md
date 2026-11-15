@@ -516,6 +516,7 @@ Tests are set up immediately after project init (unit 2). Each subsequent implem
 | 6 | User API routes/controllers | `src/modules/users/user.routes.ts`, `user.controller.ts` — `POST/GET/GET:id /users` with Zod validation; endpoints return correct status codes and shapes | `feat(api): implement user endpoints` |
 | 7 | Task API routes/controllers | `src/modules/tasks/task.routes.ts`, `task.controller.ts` — `POST/GET/GET:id/PATCH/DELETE /tasks` with Zod validation; endpoints return correct status codes; filtering/pagination works | `feat(api): implement task endpoints` |
 | 8 | Validation | Zod schemas for all request bodies, params, queries (`user.validation.ts`, `task.validation.ts`) | Invalid input rejected with 400 + structured `error.code` | All invalid inputs return 400 with `error.code` | Unit tests on schemas | `feat(validation): implement request validation` |
+| 9 | Error handling middleware | `src/middleware/error-handler.ts`, `not-found.ts` | Centralized errors; consistent JSON structure; 404 for unknown routes | All error paths return `{ error: { code, message, details } }` | Unit + API tests | `fix(api): implement centralized error handling` |
 
 ### 7.3 Development Workflow
 
