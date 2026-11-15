@@ -506,7 +506,9 @@ Tests are set up immediately after project init (unit 2). Each subsequent implem
 
 ### 7.2 Completed Milestones
 
-List completed milestones and the corresponding functionality.
+| Stage | Unit | Functionality | Commit |
+|-------|------|---------------|--------|
+| 1 | Project init | `package.json`, `tsconfig.json`, Prisma CLI, `.env.example`, `.gitignore`, src skeleton (`app.ts`, `server.ts`), Prisma schema (`users` + `tasks`), health check endpoint (`GET /health`), CI/CD workflow fixes (`--ignore-scripts`, `prisma generate`), ESLint configuration | `chore(project): initialize project` |
 
 ### 7.3 Development Workflow
 
