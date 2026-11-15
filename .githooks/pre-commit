@@ -1,0 +1,9 @@
+#!/bin/sh
+# Pre-commit hook: prevent commits directly on master
+branch=$(git rev-parse --abbrev-ref HEAD)
+if [ "$branch" = "master" ]; then
+  echo "ERROR: Commits directly on master are prohibited."
+  echo "       Create a feature branch (feature/*) and commit there instead."
+  exit 1
+fi
+exit 0
