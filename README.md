@@ -24,7 +24,7 @@ Describe the purpose of the application and the problem it solves.
 
 ### Project Status
 
-Describe the actual implementation status.
+Planning and requirements analysis complete. No implementation code exists yet. Technology stack and architecture decisions are pending developer approval.
 
 Do not leave temporary development notes in the final version.
 
@@ -34,23 +34,53 @@ Do not leave temporary development notes in the final version.
 
 ### Functional Requirements
 
-Describe the required task-management operations.
+- Create a task.
+- Retrieve a task by its identifier.
+- List tasks with filtering and pagination.
+- Update an existing task.
+- Delete a task.
+- Filter tasks by status.
+- Filter tasks by assignee.
+- Paginated task listing.
+- Persistent storage in a relational database with migrations.
+- Automated testing targeting at least 90% code coverage across unit, integration, and API/HTTP test levels.
+- API documentation through OpenAPI/Swagger.
 
 ### Non-Functional Requirements
 
-Document relevant requirements concerning:
-
-- Maintainability.
-- Reliability.
-- Validation.
-- Error handling.
-- Testability.
-- Documentation.
-- Deployment.
+- Maintainability: clear structure, separation of concerns, meaningful commits.
+- Reliability: consistent HTTP status codes, predictable error responses.
+- Validation: input validation at the API boundary.
+- Error handling: centralized error handling, no exposure of internal details.
+- Testability: isolated test database, unit/integration/API test levels.
+- Documentation: README as central document, API contract documented.
+- Deployment: GitHub Actions CI/CD, deployment triggered by `master` merges (not tags).
+- Scope proportionality: no unnecessary abstractions or infrastructure.
+- Cost: free tools and services wherever possible.
 
 ### Scope and Limitations
 
-Explain what is included in the initial implementation and what has deliberately been excluded.
+Included in the initial implementation:
+
+- Task CRUD operations.
+- Filtering by status and assignee.
+- Offset-based pagination.
+- Relational database (PostgreSQL) with Prisma migrations.
+- Automated unit, integration, and API/HTTP tests targeting at least 90% code coverage.
+- GitHub Actions CI running on feature branches and Pull Requests.
+- Automatic deployment to a Debian 13 VPS on `master` merges.
+- OpenAPI/Swagger API documentation.
+- Public demonstration using fictitious data.
+
+Deliberately excluded:
+
+- Authentication and authorization.
+- User management.
+- Microservices, distributed systems, or event-driven architecture.
+- CQRS, event sourcing, or complex hexagonal patterns.
+- Paid services or subscriptions.
+- Git tags or GitHub releases as deployment triggers.
+- Direct commits or pushes to `master`.
 
 ---
 
