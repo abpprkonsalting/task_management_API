@@ -511,6 +511,7 @@ Tests are set up immediately after project init (unit 2). Each subsequent implem
 | 1 | Project init | `package.json`, `tsconfig.json`, Prisma CLI, `.env.example`, `.gitignore`, src skeleton (`app.ts`, `server.ts`), Prisma schema (`users` + `tasks`), health check endpoint (`GET /health`), CI/CD workflow fixes (`--ignore-scripts`, `prisma generate`), ESLint configuration | `chore(project): initialize project` |
 | 2 | Test setup | Vitest configuration, test database strategy, coverage config (≥90%), test cleanup helpers, scaffold test | `test(setup): configure Vitest and test database` |
 | 3 | Database schema & migrations | `prisma/schema.prisma` with `users` + `tasks` tables, `TaskStatus` enum, FK `tasks.responsibleId → users.id`, indexes on `([status, responsibleId, createdAt, id])` and `([responsibleId])`, initial migration `20261115_init_users_tasks` | `feat(database): define users and tasks schema` |
+| 4 | User repository/service | `src/modules/users/user.repository.ts`, `user.service.ts` — CRUD users via Prisma; email uniqueness enforced; `NotFoundError`/`ConflictError` shared error classes | `feat(repository): implement user persistence` |
 
 ### 7.3 Development Workflow
 
