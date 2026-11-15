@@ -457,7 +457,20 @@ Do not claim test coverage or successful execution unless it has actually been v
 
 ### 7.1 Implementation Stages
 
-Summarize the major implementation stages.
+| # | Unit | Scope | Expected Behavior | Acceptance Criteria | Tests | Commit Message |
+|---|------|-------|-------------------|---------------------|-------|----------------|
+| 1 | Project init | `package.json`, `tsconfig.json`, Prisma CLI, `.env.example`, `.gitignore`, src skeleton (`app.ts`, `server.ts`) | App compiles, starts, exposes health check | `tsc --noErrors` passes; server starts on `PORT` | None (scaffold) | `chore(project): initialize project` |
+| 2 | Test setup | Vitest configuration, test database strategy, coverage config (≥90%), test cleanup helpers | Test suite runs in isolation against a dedicated test database | `vitest --run` executes; coverage report generated | Scaffold tests pass | `test(setup): configure Vitest and test database` |
+| 3 | Database schema & migrations | `prisma/schema.prisma` with `users` and `tasks` tables, initial migration | `prisma migrate dev` creates both tables with FK and indexes | Schema applies cleanly; tables exist with correct columns | Migration applies on fresh DB | `feat(database): define users and tasks schema` |
+| 4 | User repository/service | `src/modules/users/user.repository.ts`, `user.service.ts` | CRUD users via Prisma; email uniqueness enforced | Create, list, get user; duplicate email rejected | Unit + integration tests | `feat(repository): implement user persistence` |
+| 5 | Task repository/service | `src/modules/tasks/task.repository.ts`, `task.service.ts` | CRUD tasks; filter by status/responsibleId; pagination | Create, list (filtered/paginated), get, update, delete task | Unit + integration tests | `feat(repository): implement task persistence` |
+| 6 | User API routes/controllers | `src/modules/users/user.routes.ts`, `user.controller.ts` | `POST/GET/GET:id /users` with Zod validation | Endpoints return correct status codes and shapes | API/HTTP tests | `feat(api): implement user endpoints` |
+| 7 | Task API routes/controllers | `src/modules/tasks/task.routes.ts`, `task.controller.ts` | `POST/GET/GET:id/PATCH/DELETE /tasks` with Zod validation | Endpoints return correct status codes; filtering/pagination works | API/HTTP tests | `feat(api): implement task endpoints` |
+| 8 | Validation | Zod schemas for all request bodies, params, queries | Invalid input rejected with 400 + structured error | All invalid inputs return 400 with `error.code` | Unit tests on schemas | `feat(validation): implement request validation` |
+| 9 | Error handling middleware | `src/middleware/error-handler.ts`, `not-found.ts` | Centralized errors; consistent JSON structure; 404 for unknown routes | All error paths return `{ error: { code, message, details } }` | Unit + API tests | `fix(api): implement centralized error handling` |
+| 10 | OpenAPI/Swagger | Swagger UI config from implemented endpoints | Interactive docs at `/api-docs` | Docs match actual endpoints | None | `feat(docs): add Swagger API documentation` |
+
+Tests are set up immediately after project init (unit 2). Each subsequent implementation unit includes its own tests, and the full suite is run before starting the next unit to validate there are no regressions.
 
 ### 7.2 Completed Milestones
 
