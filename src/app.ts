@@ -18,11 +18,11 @@ app.get('/api-docs.json', (_req, res) => {
   res.type('application/json').json(swaggerSpec);
 });
 
-app.use(notFound);
-app.use(errorHandler);
-
 app.get('/health', (_req, res) => {
   res.status(200).json({ status: 'ok' });
 });
+
+app.use(notFound);
+app.use(errorHandler);
 
 export default app;
