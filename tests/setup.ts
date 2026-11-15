@@ -1,8 +1,12 @@
+import dotenv from 'dotenv';
 import { execSync } from 'child_process';
 import { beforeAll, afterEach, afterAll } from 'vitest';
 import { PrismaClient } from '@prisma/client';
 
-// Ensure test environment variables are loaded
+// Load test environment variables so `npm run test` works without
+// manually exporting DATABASE_URL and NODE_ENV.
+dotenv.config({ path: '.env.test' });
+
 const prisma = new PrismaClient();
 
 export async function cleanDb() {
