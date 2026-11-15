@@ -207,7 +207,128 @@ Foreign key: `tasks.responsibleId → users.id`.
 
 ### 4.4 API Design
 
-To be defined in Phase 4.
+**Base URL:** `http://localhost:3000` (local), public demonstration URL documented in Section 11.
+
+**Endpoints:**
+
+| Method | Endpoint | Purpose | Success Status |
+|--------|----------|---------|----------------|
+| POST | `/users` | Create a user | 201 Created |
+| GET | `/users` | List users | 200 OK |
+| GET | `/users/:id` | Retrieve a user | 200 OK |
+| POST | `/tasks` | Create a task | 201 Created |
+| GET | `/tasks` | List tasks with filtering and pagination | 200 OK |
+| GET | `/tasks/:id` | Retrieve a task | 200 OK |
+| PATCH | `/tasks/:id` | Partially update a task | 200 OK |
+| DELETE | `/tasks/:id` | Delete a task | 204 No Content |
+
+PATCH is used for partial updates (e.g., updating only the status). PUT is not implemented; complete resource replacement is not required.
+
+**Users request/response:**
+
+Create user (`POST /users`):
+- Request body: `{ name: string, email: string }`
+- Response (201): `{ id: uuid, name: string, email: string, createdAt: timestamp, updatedAt: timestamp }`
+
+List users (`GET /users`):
+- Response (200): `{ data: user[], pagination: { page, limit, total, totalPages } }`
+
+Get user (`GET /users/:id`):
+- Path parameter: `id` (UUID, validated)
+- Response (200): single user object
+- Response (404): user not found
+
+**Tasks request/response:**
+
+Create task (`POST /tasks`):
+- Request body: `{ title: string, description?: string, status?: 'PENDING' \| 'IN_PROGRESS' \| 'COMPLETED', responsibleId: uuid }`
+- Response (201): `{ id: uuid, title: string, description?: string, status: string, responsibleId: uuid, createdAt: timestamp, updatedAt: timestamp }`
+
+List tasks (`GET /tasks`):
+- Query parameters: `status` (optional enum), `responsibleId` (optional UUID), `page` (positive int, default 1), `limit` (positive int, default 10, max 100)
+- Response (200): `{ data: task[], pagination: { page, limit, total, totalPages } }`
+
+Get task (`GET /tasks/:id`):
+- Path parameter: `id` (UUID, validated)
+- Response (200): single task object
+- Response (404): task not found
+
+Update task (`PATCH /tasks/:id`):
+- Path parameter: `id` (UUID, validated)
+- Request body: partial task fields (at least one field required)
+- Response (200): updated task object
+- Response (404): task not found
+
+Delete task (`DELETE /tasks/:id`):
+- Path parameter: `id` (UUID, validated)
+- Response (204): no content
+- Response (404): task not found
+
+**Filtering:**
+
+Filters `status` and `responsibleId` are optional and can be combined:
+```
+GET /tasks?status=PENDING&responsibleId=<uuid>
+```
+Invalid filter values return 400. String matching is exact and case-sensitive. Empty filter values are ignored.
+
+**Pagination:**
+
+Offset-based pagination with deterministic ordering (`createdAt DESC`, `id` as tie-break).
+```
+GET /tasks?page=1&limit=10
+```
+- Default page: 1
+- Default page size: 10
+- Maximum page size: 100
+- Invalid parameters return 400
+
+Pagination response metadata:
+```json
+{
+  "data": [],
+  "pagination": {
+    "page": 1,
+    "limit": 10,
+    "total": 0,
+    "totalPages": 0
+  }
+}
+```
+
+**HTTP status codes:**
+
+| Code | Meaning | Typical Use |
+|------|---------|-------------|
+| 200 | OK | Successful retrieval or update |
+| 201 | Created | Resource successfully created |
+| 204 | No Content | Successful deletion |
+| 400 | Bad Request | Invalid request data or parameters |
+| 404 | Not Found | Requested resource does not exist |
+| 409 | Conflict | Actual resource or database conflict |
+| 500 | Internal Server Error | Unexpected server-side error |
+
+**Validation:**
+
+Zod schemas validate: task creation, task updates, path parameters (`id` as UUID), filtering parameters (`status`, `responsibleId`), and pagination parameters (`page`, `limit`).
+
+**Error response format:**
+
+```json
+{
+  "error": {
+    "code": "VALIDATION_ERROR",
+    "message": "Request validation failed",
+    "details": []
+  }
+}
+```
+
+No stack traces, credentials, or internal details exposed to API consumers.
+
+**API documentation:**
+
+OpenAPI/Swagger documentation generated from the implemented endpoints and kept synchronized with the actual API.
 
 ### 4.5 Validation and Error Handling
 
