@@ -513,6 +513,8 @@ Tests are set up immediately after project init (unit 2). Each subsequent implem
 | 3 | Database schema & migrations | `prisma/schema.prisma` with `users` + `tasks` tables, `TaskStatus` enum, FK `tasks.responsibleId → users.id`, indexes on `([status, responsibleId, createdAt, id])` and `([responsibleId])`, initial migration `20261115_init_users_tasks` | `feat(database): define users and tasks schema` |
 | 4 | User repository/service | `src/modules/users/user.repository.ts`, `user.service.ts` — CRUD users via Prisma; email uniqueness enforced; `NotFoundError`/`ConflictError` shared error classes | `feat(repository): implement user persistence` |
 | 5 | Task repository/service | `src/modules/tasks/task.repository.ts`, `task.service.ts` — CRUD tasks; filter by status/responsibleId; pagination; validates responsible user exists | `feat(repository): implement task persistence` |
+| 6 | User API routes/controllers | `src/modules/users/user.routes.ts`, `user.controller.ts` — `POST/GET/GET:id /users` with Zod validation; endpoints return correct status codes and shapes | `feat(api): implement user endpoints` |
+| 7 | Task API routes/controllers | `src/modules/tasks/task.routes.ts`, `task.controller.ts` — `POST/GET/GET:id/PATCH/DELETE /tasks` with Zod validation; endpoints return correct status codes; filtering/pagination works | `feat(api): implement task endpoints` |
 
 ### 7.3 Development Workflow
 

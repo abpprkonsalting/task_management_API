@@ -9,7 +9,7 @@
     "start": "node dist/server.js",
     "typecheck": "tsc --noEmit",
     "lint": "eslint src",
-    "test": "vitest run src/database.test.ts && vitest run src/modules/users/user.service.test.ts && vitest run src/modules/tasks/task.service.test.ts && vitest run src/modules/users/user.controller.test.ts && vitest run src/modules/users/user.api.test.ts && vitest run src/modules/users/user.integration.test.ts && vitest run src/modules/tasks/task.integration.test.ts",
+    "test": "vitest run src/database.test.ts && vitest run src/modules/users/user.service.test.ts && vitest run src/modules/tasks/task.service.test.ts && vitest run src/modules/users/user.controller.test.ts && vitest run src/modules/users/user.api.test.ts && vitest run src/modules/users/user.integration.test.ts && vitest run src/modules/tasks/task.controller.test.ts && vitest run src/modules/tasks/task.api.test.ts && vitest run src/modules/tasks/task.integration.test.ts",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "prisma:generate": "prisma generate",
