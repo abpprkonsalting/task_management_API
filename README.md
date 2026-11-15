@@ -427,29 +427,61 @@ Managed with Prisma. Schema maintained in `prisma/schema.prisma`.
 
 ### 6.1 Testing Approach
 
-Describe the testing framework and the testing levels used.
+Testing framework: **Vitest**. Three complementary test levels:
+
+- **Unit tests:** isolated business rules, validation logic, service behavior with controlled dependencies.
+- **Integration tests:** interactions between components — service/repository, Prisma database operations, constraints, persistence behavior.
+- **API/HTTP tests:** actual API behavior through HTTP requests — CRUD operations, invalid request bodies, missing resources, invalid identifiers, filtering, pagination, correct HTTP status codes, error response structure.
+
+Coverage target: **at least 90%** across the codebase, measured by Vitest coverage reporting.
 
 ### 6.2 Test Plan
 
-Summarize the planned test coverage, including:
+Planned coverage includes:
 
-- Unit tests.
-- Integration tests.
-- API/HTTP tests.
+- Unit tests: Zod validation schemas, service business logic.
+- Integration tests: Prisma persistence, user/task creation and retrieval, email uniqueness constraint, foreign key relationship (`tasks.responsibleId → users.id`).
+- API/HTTP tests: all eight endpoints (users: create/list/get; tasks: create/list/get/update/delete), filtering by `status` and `responsibleId`, pagination with defaults and limits, invalid inputs, missing resources (404), invalid UUIDs (400), correct status codes (200, 201, 204, 400, 404, 409, 500), error response structure.
 
 ### 6.3 Test Cases
 
-List the important test scenarios and expected results.
+Unit tests exist for every implementation unit and are run alongside integration and API tests before moving to the next unit, validating there are no regressions. Unit tests cover:
+
+- Zod validation schemas (task creation, task updates, path parameters, filtering, pagination).
+- Service business logic with controlled dependencies.
+
+Integration and API/HTTP test cases:
+
+| Scenario | Expected Result |
+|----------|-----------------|
+| Create valid task | 201, task returned with generated `id` and timestamps |
+| Create task with missing title | 400, validation error |
+| Create task with invalid `status` | 400, validation error |
+| Create task with non-existent `responsibleId` | 400 or 404, FK violation handled |
+| Get existing task | 200, task returned |
+| Get non-existent task | 404 |
+| Update task status via PATCH | 200, only `status` changed, `updatedAt` refreshed |
+| Delete task | 204 |
+| List tasks filtered by `status` | 200, only matching tasks returned |
+| List tasks filtered by `responsibleId` | 200, only tasks for that user returned |
+| Pagination `page`/`limit` defaults | 200, page 1, limit 10, metadata included |
+| Pagination exceeding max page size | 400 |
+| Invalid UUID in path parameter | 400 |
+| Duplicate user email | 400 or 409, uniqueness enforced |
 
 ### 6.4 Running Tests
 
-Provide the commands needed to execute the test suite.
+- Run full suite: `vitest --run`
+- Run with coverage: `vitest --run --coverage`
+- Run specific test file: `vitest run src/modules/tasks/task.service.test.ts`
 
 ### 6.5 Test Results
 
-Summarize the verified results of the final test run.
+To be filled after tests are executed. Do not claim coverage or successful execution unless verified.
 
-Do not claim test coverage or successful execution unless it has actually been verified.
+Test database: isolated PostgreSQL test database, separate from development and production. Schema initialized via migrations. Test data cleaned up between tests. Destructive operations never target the production database.
+
+Run relevant tests during implementation of each unit; run the complete suite at integration points and before merging to `master`.
 
 ---
 
