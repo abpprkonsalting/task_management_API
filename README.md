@@ -517,6 +517,7 @@ Tests are set up immediately after project init (unit 2). Each subsequent implem
 | 7 | Task API routes/controllers | `src/modules/tasks/task.routes.ts`, `task.controller.ts` — `POST/GET/GET:id/PATCH/DELETE /tasks` with Zod validation; endpoints return correct status codes; filtering/pagination works | `feat(api): implement task endpoints` |
 | 8 | Validation | Zod schemas for all request bodies, params, queries (`user.validation.ts`, `task.validation.ts`) | Invalid input rejected with 400 + structured `error.code` | All invalid inputs return 400 with `error.code` | Unit tests on schemas | `feat(validation): implement request validation` |
 | 9 | Error handling middleware | `src/middleware/error-handler.ts`, `not-found.ts` | Centralized errors; consistent JSON structure; 404 for unknown routes | All error paths return `{ error: { code, message, details } }` | Unit + API tests | `fix(api): implement centralized error handling` |
+| 10 | OpenAPI/Swagger documentation | `src/config/swagger.ts` OpenAPI spec; Swagger UI mounted at `/api-docs` and OpenAPI spec at `/api-docs.json`; docs cover all implemented users, tasks, and health endpoints with request/response schemas and status codes | Docs match actual endpoints | None | `feat(docs): add Swagger API documentation` |
 
 ### 7.3 Development Workflow
 
@@ -590,7 +591,7 @@ Document supported filters, query parameters, defaults, and limits.
 
 ### API Documentation
 
-Provide the Swagger UI / OpenAPI URL when available.
+Interactive API documentation is available through Swagger UI at `http://localhost:3000/api-docs`, with the raw OpenAPI 3.0 spec served at `http://localhost:3000/api-docs.json`. The documentation is generated from the implemented endpoints and kept synchronized with the actual API.
 
 ---
 
