@@ -3,36 +3,14 @@ import express from 'express';
 import http from 'http';
 import { AddressInfo } from 'net';
 import userRoutes from './user.routes';
+import { notFound } from '../../middleware/not-found';
+import { errorHandler } from '../../middleware/error-handler';
 
 const app = express();
 app.use(express.json());
 app.use('/users', userRoutes);
-
-// Local error handler so API/HTTP tests receive structured JSON responses.
-// The centralized error-handling middleware is implemented in stage 9.
-app.use((err: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
-  void _req;
-  void _next;
-  if (
-    err !== null &&
-    typeof err === 'object' &&
-    'statusCode' in err &&
-    'code' in err
-  ) {
-    const e = err as {
-      statusCode: number;
-      code: string;
-      message: string;
-      details: unknown[];
-    };
-    return res.status(e.statusCode).json({
-      error: { code: e.code, message: e.message, details: e.details },
-    });
-  }
-  return res.status(500).json({
-    error: { code: 'INTERNAL_ERROR', message: 'Internal server error', details: [] },
-  });
-});
+app.use(notFound);
+app.use(errorHandler);
 
 let server: http.Server;
 
