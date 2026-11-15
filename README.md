@@ -594,8 +594,14 @@ All development happens on feature branches (`feature/*`). Direct commits and pu
 
 Local safeguards (development environment):
 
-- Pre-commit hook: prevents local commits directly on `master`.
-- Pre-push hook: prevents direct pushes to `master`.
+Hooks are stored in `.githooks/`. To enable them locally:
+
+```
+git config core.hooksPath .githooks
+```
+
+- `pre-commit`: prevents local commits directly on `master`.
+- `pre-push`: prevents direct pushes to `master` (use via `git config core.hooksPath .githooks` or run manually before pushing).
 
 These hooks are local safeguards, not a substitute for GitHub branch protection. They can be bypassed or omitted by a user with sufficient local control.
 

@@ -1,0 +1,25 @@
+#!/bin/sh
+# Pre-push hook: prevent pushes directly to master
+# Note: Git does not provide a native pre-push hook.
+# To use: add to your git config or run manually before pushing.
+# Example: git config alias.push '!f() { . .githooks/pre-push && git push "$@"; }; f'
+
+protected_branch="master"
+current_branch=$(git rev-parse --abbrev-ref HEAD)
+
+if [ "$current_branch" = "$protected_branch" ]; then
+  echo "ERROR: Pushing directly to $protected_branch is prohibited."
+  echo "       Merge via Pull Request instead."
+  exit 1
+fi
+
+# Check if any ref being pushed targets master
+while read local_ref local_sha remote_ref remote_sha; do
+  if [ "$remote_ref" = "refs/heads/$protected_branch" ]; then
+    echo "ERROR: Pushing to $protected_branch is prohibited."
+    echo "       Merge via Pull Request instead."
+    exit 1
+  fi
+done
+
+exit 0
