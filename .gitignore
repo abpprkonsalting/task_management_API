@@ -1,6 +1,28 @@
-docs/
+# Environment variables (keep .env.example tracked)
 .env
 .env.local
+.env.development
+.env.test
+.env.production
+
+# Dependencies
 node_modules/
+
+# Build output
 dist/
+*.tsbuildinfo
+
+# Test coverage
+coverage/
+
+# Logs
 *.log
+npm-debug.log*
+
+# OS and editor files
+.DS_Store
+.vscode/
+.idea/
+
+# Documentation (untracked during development)
+docs/
