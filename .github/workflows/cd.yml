@@ -12,8 +12,51 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      - name: Deploy to VPS
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run backend tests
+        run: npm test
+
+      - name: Build TypeScript
+        run: npm run build
+
+      - name: Generate Prisma client
+        run: npx prisma generate
+
+      - name: Write production .env
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          PORT: ${{ secrets.PORT }}
+          NODE_ENV: ${{ secrets.NODE_ENV }}
+        run: |
+          cat > .env <<EOF
+          DATABASE_URL=${DATABASE_URL}
+          PORT=${PORT}
+          NODE_ENV=${NODE_ENV}
+          EOF
+          chmod 600 .env
+
+      - name: Copy artifacts to VPS
+        uses: appleboy/scp-action@v1.0.0
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          port: ${{ secrets.VPS_PORT }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          source: "dist/,package.json,package-lock.json,.env,prisma/schema.prisma"
+          target: "${{ secrets.VPS_APP_DIR }}"
+
+      - name: Deploy on VPS
         uses: appleboy/ssh-action@v1.0.0
         with:
           host: ${{ secrets.VPS_HOST }}
@@ -22,6 +65,7 @@ jobs:
           key: ${{ secrets.VPS_SSH_KEY }}
           script: |
             cd ${{ secrets.VPS_APP_DIR }}
-            git pull origin master
-            npm ci --production --ignore-scripts
+            npm ci
             npx prisma generate
+            # npx prisma migrate deploy
+            # sudo systemctl restart task-management-api
