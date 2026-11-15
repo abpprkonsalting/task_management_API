@@ -23,8 +23,4 @@ jobs:
           script: |
             cd ${{ secrets.VPS_APP_DIR }}
             git pull origin master
-            npm ci
-            npx prisma migrate deploy
-            npm run build
-            npm prune --omit=dev
-            sudo systemctl restart task-management-api
+            npm ci --production
