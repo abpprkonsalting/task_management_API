@@ -636,27 +636,61 @@ The intended flow is:
 
 ### 10.4 Deployment Architecture
 
-To be defined in Phase 7 (VPS Deployment).
+Deployment uses GitHub Actions secrets to connect to the VPS via SSH:
+
+- **Host:** `VPS_HOST`
+- **Port:** `VPS_PORT`
+- **User:** `VPS_USER`
+- **SSH key:** `VPS_SSH_KEY`
+- **Application directory:** `VPS_APP_DIR`
+- **OS:** Debian 13
+- **Node.js on VPS:** pre-installed
+
+The CD workflow (`.github/workflows/cd.yml`) connects via SSH, pulls the latest `master`, installs production dependencies, and verifies the deployment. VPS-side application runtime (systemd service), PostgreSQL database, and Apache reverse proxy are deferred to Phase 7 and are not required for the initial file deployment.
 
 ### 10.5 VPS Configuration
 
 Required GitHub Actions secrets (Settings → Secrets and variables → Actions):
 
-| Secret | Description | Example |
-|--------|-------------|---------|
-| `VPS_HOST` | VPS IP address or hostname | `198.51.100.42` |
-| `VPS_PORT` | SSH port on the VPS | `6543` |
-| `VPS_USER` | Dedicated Linux deployment user | `deploy` |
-| `VPS_SSH_KEY` | Private SSH key for VPS access | `-----BEGIN OPENSSH PRIVATE KEY-----...` |
-| `VPS_APP_DIR` | Application directory on the VPS | `/home/deploy/task-management-api` |
+| Secret | Description |
+|--------|-------------|
+| `VPS_HOST` | VPS IP address or hostname |
+| `VPS_PORT` | SSH port on the VPS |
+| `VPS_USER` | Dedicated Linux deployment user |
+| `VPS_SSH_KEY` | Private SSH key for VPS access |
+| `VPS_APP_DIR` | Application directory on the VPS |
 
-Deployment uses these secrets to connect via SSH, pull the latest `master`, install production dependencies, apply Prisma migrations, build, and restart the systemd service.
+VPS state:
 
-To be further detailed in Phase 7 (VPS server setup: dedicated user, dedicated database, systemd service, Apache reverse proxy, health endpoint).
+- Debian 13 with Node.js and npm pre-installed.
+- Application directory exists, owned by the deployment user.
+- PostgreSQL: not installed (deferred).
+- Apache: installed but not configured for this app (deferred).
+- systemd: reference service file exists (deferred).
+- Firewall: custom iptables (deferred).
 
 ### 10.6 Deployment Verification
 
-To be defined in Phase 7 (VPS Deployment).
+To verify deployment succeeded:
+
+1. SSH into the VPS:
+   ```
+   ssh -p <VPS_PORT> <VPS_USER>@<VPS_HOST>
+   ```
+2. Confirm the application files are present:
+   ```
+   ls -la <VPS_APP_DIR>/
+   ```
+3. Confirm the checked-out branch is `master`:
+   ```
+   cd <VPS_APP_DIR> && git rev-parse --abbrev-ref HEAD
+   ```
+4. Confirm dependencies are installed:
+   ```
+   ls <VPS_APP_DIR>/node_modules/.package-lock.json
+   ```
+
+Application runtime verification (systemd service, health endpoint, PostgreSQL connectivity) is deferred to Phase 7.
 
 ---
 
