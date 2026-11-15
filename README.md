@@ -169,11 +169,45 @@ Component responsibilities:
 
 ### 4.3 Data Model
 
-To be defined in Phase 3.
+**USERS table:**
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `id` | UUID | Yes | Primary key |
+| `name` | VARCHAR(200) | Yes | User full name |
+| `email` | VARCHAR(255) | Yes | User email (unique) |
+| `createdAt` | TIMESTAMP | Yes | Creation timestamp |
+| `updatedAt` | TIMESTAMP | Yes | Last modification timestamp |
+
+**Task entity:**
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `id` | UUID | Yes | Primary key |
+| `title` | VARCHAR(200) | Yes | Task title |
+| `description` | TEXT | No | Task description |
+| `status` | ENUM | Yes | `PENDING` \| `IN_PROGRESS` \| `COMPLETED` |
+| `responsibleId` | UUID | Yes | Foreign key → `USERS.id` |
+| `createdAt` | TIMESTAMP | Yes | Creation timestamp |
+| `updatedAt` | TIMESTAMP | Yes | Last modification timestamp |
+
+**Pagination tie-break + indexes**
+
+Deterministic ordering uses `createdAt DESC` with `id` as tie-break. Indexes:
+
+| Table | Index | Purpose |
+|-------|-------|---------|
+| `users` | Primary key (`id`) | Entity lookup |
+| `users` | Unique (`email`) | Uniqueness enforcement |
+| `tasks` | Primary key (`id`) | Entity lookup |
+| `tasks` | (`status`, `responsibleId`, `createdAt` DESC, `id`) | Filtered pagination with deterministic tie-break |
+| `tasks` | (`responsibleId`) | Filtering by responsible |
+
+Foreign key: `tasks.responsibleId → users.id`.
 
 ### 4.4 API Design
 
-To be defined in Phase 3.
+To be defined in Phase 4.
 
 ### 4.5 Validation and Error Handling
 
@@ -243,21 +277,28 @@ Distinguishes validation errors, invalid parameters, missing resources, database
 
 ### Database Configuration
 
-Explain the database engine and connection configuration.
+Database engine: PostgreSQL. Connection configured via the `DATABASE_URL` environment variable. Connection settings are validated at application startup; an invalid or incomplete configuration causes a clear startup failure.
 
 ### Schema
 
-Describe the database schema.
+Two tables:
+
+- **users**: `id` (UUID PK), `name` (VARCHAR 200, required), `email` (VARCHAR 255, required, unique), `createdAt` (TIMESTAMP, required), `updatedAt` (TIMESTAMP, required).
+- **tasks**: `id` (UUID PK), `title` (VARCHAR 200, required), `description` (TEXT, optional), `status` (ENUM: `PENDING`, `IN_PROGRESS`, `COMPLETED`, required), `responsibleId` (UUID, required, FK → `users.id`), `createdAt` (TIMESTAMP, required), `updatedAt` (TIMESTAMP, required).
 
 ### Migrations
 
-Explain how migrations are created, applied, and managed.
+Managed with Prisma. Schema maintained in `prisma/schema.prisma`.
 
-Include the commands required to initialize a new database.
+- Generate migrations: `prisma migrate dev`
+- Apply migrations (development): `prisma migrate dev`
+- Apply migrations (production/deployment): `prisma migrate deploy`
+- Migrations are applied in a controlled manner on the VPS during deployment; destructive database reset commands are never used as part of normal production deployment.
 
 ### Development and Test Databases
 
-Explain how database environments are separated and how tests avoid modifying development data.
+- **Development database:** Dedicated PostgreSQL database on the local environment.
+- **Test database:** Isolated PostgreSQL test database, separate from development and production. Schema initialized via migrations. Test data is cleaned up between tests. Destructive operations never target the production database.
 
 ---
 
