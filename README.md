@@ -24,9 +24,17 @@ Describe the purpose of the application and the problem it solves.
 
 ### Project Status
 
-Planning and requirements analysis complete. No implementation code exists yet. Technology stack and architecture decisions are pending developer approval.
+Implementation complete. All 10 implementation stages have been delivered and merged into `master`:
 
-Do not leave temporary development notes in the final version.
+- Project initialization, TypeScript/Prisma setup, and health check endpoint (`GET /health`).
+- Vitest test configuration with an isolated test database and a ≥90% coverage target.
+- `users` and `tasks` database schema with Prisma migrations.
+- User and task repository/service layers.
+- User and task REST API endpoints with Zod validation.
+- Centralized error handling and 404 middleware.
+- OpenAPI/Swagger documentation at `/api-docs`.
+
+Type checking (`tsc --noEmit`) and linting (`eslint src`) pass cleanly. The full test suite passes against the isolated test database.
 
 ---
 
@@ -75,7 +83,6 @@ Included in the initial implementation:
 Deliberately excluded:
 
 - Authentication and authorization.
-- User management.
 - Microservices, distributed systems, or event-driven architecture.
 - CQRS, event sourcing, or complex hexagonal patterns.
 - Paid services or subscriptions.
@@ -127,21 +134,28 @@ Microservices, distributed systems, event-driven architectures, CQRS, and comple
 src/
 ├── app.ts
 ├── server.ts
+├── database.test.ts
 │
 ├── config/
-│   └── env.ts
-│
-├── modules/
-│   └── tasks/
-│       ├── task.routes.ts
-│       ├── task.controller.ts
-│       ├── task.service.ts
-│       ├── task.repository.ts
-│       ├── task.validation.ts
-│       └── task.types.ts
+│   └── swagger.ts
 │
 ├── database/
 │   └── prisma.ts
+│
+├── modules/
+│   ├── users/
+│   │   ├── user.controller.ts
+│   │   ├── user.routes.ts
+│   │   ├── user.repository.ts
+│   │   ├── user.service.ts
+│   │   └── user.validation.ts
+│   │
+│   └── tasks/
+│       ├── task.controller.ts
+│       ├── task.routes.ts
+│       ├── task.repository.ts
+│       ├── task.service.ts
+│       └── task.validation.ts
 │
 ├── middleware/
 │   ├── error-handler.ts
@@ -151,21 +165,21 @@ src/
     └── errors/
 ```
 
+Each module directory also contains its corresponding `*.test.ts` files (unit, controller, API, integration, validation). Test helpers live in `tests/setup.ts`.
+
 Component responsibilities:
 
 | Component | Responsibility |
 |-----------|----------------|
 | `app.ts` | Creates and configures the Express application |
 | `server.ts` | Starts the HTTP server |
-| `config/` | Application configuration and environment validation |
-| `routes` | Defines API endpoints and connects them to controllers |
-| `controllers` | Handles HTTP requests and constructs HTTP responses (no business logic) |
-| `services` | Implements business rules (no Express-specific dependencies) |
-| `repositories` | Encapsulates database access via Prisma |
-| `validation` | Defines Zod request validation schemas |
-| `database/` | Provides Prisma client configuration |
-| `middleware/` | Centralized error handling and shared HTTP concerns |
-| `shared/` | Genuinely reusable application components |
+| `config/` | Application configuration (Swagger/OpenAPI spec) |
+| `database/` | Prisma client configuration |
+| `modules/users/` | User module (routes, controller, service, repository, validation) |
+| `modules/tasks/` | Task module (routes, controller, service, repository, validation) |
+| `middleware/` | Centralized error handling and 404 for unknown routes |
+| `shared/` | Genuinely reusable application components (shared error classes) |
+| `tests/` | Global test setup helpers |
 
 ### 4.3 Data Model
 
@@ -213,6 +227,7 @@ Foreign key: `tasks.responsibleId → users.id`.
 
 | Method | Endpoint | Purpose | Success Status |
 |--------|----------|---------|----------------|
+| GET | `/health` | Health check | 200 OK |
 | POST | `/users` | Create a user | 201 Created |
 | GET | `/users` | List users | 200 OK |
 | GET | `/users/:id` | Retrieve a user | 200 OK |
@@ -477,7 +492,12 @@ Integration and API/HTTP test cases:
 
 ### 6.5 Test Results
 
-To be filled after tests are executed. Do not claim coverage or successful execution unless verified.
+Last verified run (against the isolated `task_management_test` PostgreSQL database):
+
+- Test files: 13 passed.
+- Test cases: 128 passed, 0 failed.
+- Command: `npm run test` (runs each test file sequentially against the isolated test database).
+- Coverage (Vitest v8 provider): statements 50.17%, branches 96.36%, functions 92.86%, lines 50.17%. Statement/line coverage is below the ≥90% target and remains a gap to close.
 
 Test database: isolated PostgreSQL test database, separate from development and production. Schema initialized via migrations. Test data cleaned up between tests. Destructive operations never target the production database.
 
@@ -521,11 +541,22 @@ Tests are set up immediately after project init (unit 2). Each subsequent implem
 
 ### 7.3 Development Workflow
 
-Explain the feature-branch and Pull Request workflow.
+The project follows a feature-branch → Pull Request → code review → merge into `master` workflow. All development happens on feature branches named `feature/*`; direct commits and pushes to `master` are prohibited.
 
-Describe the role of CI checks and code review.
+Local safeguards are stored in `.githooks/` and can be enabled with `git config core.hooksPath .githooks`:
 
-This section should summarize the actual workflow, not reproduce every individual commit.
+- `pre-commit`: prevents local commits directly on `master`.
+- `pre-push`: prevents direct pushes to `master`.
+
+These are local safeguards, not a substitute for GitHub branch protection, and can be bypassed by a user with sufficient local control.
+
+Continuous Integration runs on GitHub Actions for pushes to feature branches and for Pull Requests targeting `master`. CI checks include dependency installation (`npm ci`), TypeScript type checking (`tsc --noEmit`), linting (`eslint src`), automated tests (`vitest` run sequentially against the isolated test database), and production build verification (`npm run build`). A Pull Request is not eligible for merging if required checks fail.
+
+Continuous Deployment runs automatically only on the push generated by merging a Pull Request into `master`. Deployment is triggered by PR merges into `master`, never by direct pushes to `master` or by Git tags/GitHub releases. The flow is:
+
+`GitHub PR merge → push to master → GitHub Actions → SSH → Debian 13 VPS → Running API`
+
+Each implementation unit is verified (relevant tests run, full suite before merging) and independently reviewed before its Pull Request is approved and merged.
 
 ---
 
@@ -533,35 +564,91 @@ This section should summarize the actual workflow, not reproduce every individua
 
 ### 8.1 Prerequisites
 
-List required software and supported versions.
+- Node.js (v20 or later) and npm.
+- PostgreSQL (a running instance for development and for the isolated test database).
 
 ### 8.2 Installation
 
-Provide the commands to clone the repository and install dependencies.
+Clone the repository and install dependencies:
+
+```
+git clone <repository-url>
+cd task_management_API
+npm ci
+```
 
 ### 8.3 Environment Configuration
 
-Document required environment variables.
+Copy `.env.example` to `.env` and adjust the values for your environment. Never commit actual credentials or secrets.
 
-Include an `.env.example` reference.
+```
+cp .env.example .env
+```
 
-Never include actual credentials or secrets.
+Required environment variables:
+
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `DATABASE_URL` | PostgreSQL connection URL | `postgresql://user:password@localhost:5432/task_management?schema=public` |
+| `PORT` | HTTP server port | `3000` |
+| `NODE_ENV` | Application environment | `development` |
+
+For tests, a separate `.env.test` file points at an isolated test database (`task_management_test`) on `PORT=3001`, `NODE_ENV=test`.
 
 ### 8.4 Database Setup
 
-Explain how to create and initialize the database and apply migrations.
+The schema and migrations are managed with Prisma in `prisma/schema.prisma`.
+
+- Generate the Prisma client: `npm run prisma:generate`
+- Create and apply migrations (development): `npm run prisma:migrate:dev`
+- Apply migrations (production): `npm run prisma:migrate:deploy`
+
+Ensure the target database exists before applying migrations.
 
 ### 8.5 Running the Application
 
-Provide the command to start the development server.
+Start the development server (TypeScript, with `ts-node`):
+
+```
+npm run dev
+```
+
+The API is then available at `http://localhost:3000` (or the configured `PORT`).
 
 ### 8.6 Building for Production
 
-Explain how to compile and prepare the application for production.
+Compile TypeScript to `dist/`:
+
+```
+npm run build
+```
+
+Start the production server from the compiled output:
+
+```
+npm start
+```
 
 ### 8.7 Running Tests
 
-Provide the relevant testing commands.
+Run the full test suite (each test file sequentially against the isolated test database):
+
+```
+npm run test
+```
+
+Run with coverage reporting:
+
+```
+npm run test:coverage
+```
+
+Type checking and linting:
+
+```
+npm run typecheck
+npm run lint
+```
 
 ---
 
@@ -569,25 +656,65 @@ Provide the relevant testing commands.
 
 ### Base URL
 
-Document the local and public demonstration URLs.
+Local: `http://localhost:3000` (port configurable via `PORT`).
+
+Interactive API documentation is available through Swagger UI at `http://localhost:3000/api-docs`, with the raw OpenAPI 3.0 spec served at `http://localhost:3000/api-docs.json`. The documentation is generated from the implemented endpoints and kept synchronized with the actual API.
 
 ### Endpoints
 
-Provide an endpoint table.
-
 | Method | Endpoint | Description |
 |--------|----------|-------------|
+| GET | /health | Health check |
+| POST | /users | Create a user |
+| GET | /users | List users |
+| GET | /users/:id | Retrieve a user |
 | POST | /tasks | Create a task |
-| GET | /tasks | List tasks |
+| GET | /tasks | List tasks with filtering and pagination |
 | GET | /tasks/:id | Retrieve a task |
-| PUT/PATCH | /tasks/:id | Update a task |
+| PATCH | /tasks/:id | Partially update a task |
 | DELETE | /tasks/:id | Delete a task |
-
-The final endpoint design must reflect the implemented API.
 
 ### Filtering and Pagination
 
-Document supported filters, query parameters, defaults, and limits.
+**Filtering:** `GET /tasks` supports two optional filters that can be combined:
+
+| Query parameter | Type | Required | Description |
+|-----------------|------|----------|-------------|
+| `status` | `PENDING \| IN_PROGRESS \| COMPLETED` | No | Filter tasks by status. Exact, case-sensitive match. |
+| `responsibleId` | UUID | No | Filter tasks by the responsible user. Invalid values return 400. |
+
+Empty filter values are ignored. Invalid filter values return `400` with a structured validation error. Both filters can be combined:
+
+```
+GET /tasks?status=PENDING&responsibleId=<uuid>
+```
+
+**Pagination:** Offset-based pagination with deterministic ordering (`createdAt DESC`, `id` as tie-break).
+
+```
+GET /tasks?page=1&limit=10
+```
+
+| Query parameter | Default | Maximum | Description |
+|-----------------|---------|---------|-------------|
+| `page` | 1 | — | Page number (positive integer). |
+| `limit` | 10 | 100 | Page size (positive integer). |
+
+Invalid `page`/`limit` values return `400`. Pagination response metadata:
+
+```json
+{
+  "data": [],
+  "pagination": {
+    "page": 1,
+    "limit": 10,
+    "total": 0,
+    "totalPages": 0
+  }
+}
+```
+
+**Indexes:** Filtered pagination is backed by a composite index on `tasks(status, responsibleId, createdAt, id)` and a separate index on `tasks(responsibleId)` for assignee filtering.
 
 ### API Documentation
 
@@ -721,50 +848,62 @@ Document any relevant restrictions or reset procedures.
 
 ## 12. Known Limitations
 
-List actual limitations of the delivered implementation.
+Actual limitations of the delivered implementation:
 
-Distinguish deliberate scope exclusions from defects or unfinished work.
+- Test statement/line coverage is approximately 50% (branches 96.36%, functions 92.86%), below the ≥90% target. Additional tests are needed to close the gap.
+- No authentication or authorization; the API is openly accessible. This is a deliberate scope exclusion, not a defect.
+- Offset-based pagination only; cursor-based pagination is not implemented.
+- `PATCH` is used for partial updates; `PUT` (full resource replacement) is not implemented.
+- Public demonstration is not yet live. VPS-side runtime (systemd service), PostgreSQL installation, Apache reverse-proxy configuration, and firewall setup are deferred (see Section 10).
+
+Deliberate scope exclusions (not limitations/defects): authentication and authorization, microservices or distributed architecture, CQRS/event sourcing, paid services, and deployment triggered by Git tags or releases.
 
 ---
 
 ## 13. What I Would Improve With More Time
 
-Discuss realistic future improvements.
-
-Possible topics include:
-
-- Authentication and authorization.
-- Expanded testing.
-- Additional API functionality.
-- Security hardening.
-- Monitoring and observability.
-- Deployment rollback.
-- Scalability.
-- Agentic development workflows.
-
-Explain why each improvement would be valuable.
+- **Authentication and authorization.** The API is openly accessible with no access control. Adding authentication would enable per-user task ownership, private task visibility, and authorization checks so users can only modify their own tasks.
+- **Expanded testing.** Statement/line coverage is approximately 50%, below the ≥90% target. More unit, integration, and API tests — especially around edge cases, error paths, and the health endpoint — would close the gap and increase confidence in the implementation.
+- **Additional API functionality.** Due dates, task categories, sorting, full-text search, and task assignment reassignment would make the API more useful beyond the current CRUD + filter + paginate scope.
+- **Security hardening.** Rate limiting, request size limits, security headers (CSP, HSTS, X-Content-Type-Options), and stricter input sanitization would reduce exposure to abuse and common web attacks.
+- **Monitoring and observability.** Structured request logging, error tracking, uptime monitoring, and alerting on the health endpoint would make the deployed service observable in production.
+- **Deployment rollback.** The current CD flow deploys directly to the VPS with no rollback mechanism. A blue-green deployment or the ability to revert to a previous release would reduce downtime risk when a deployment breaks.
+- **Scalability.** The single-VPS + PostgreSQL setup is appropriate for a public demonstration but not for production load. Horizontal scaling, read replicas, and connection pooling would be needed to scale beyond a small number of concurrent users.
+- **Agentic development workflows.** Specialized AI agents for code review, test generation, and documentation could reduce manual effort, but they require careful human oversight and should not approve or merge their own work without independent review.
 
 ---
 
 ## 14. AI Usage and Development Methodology
 
-Explain how AI-assisted development was used throughout the project.
+## 14. AI Usage and Development Methodology
 
-Include:
+AI-assisted development was used throughout the project as an implementation assistant, not as an autonomous developer. The human developer retained authority over requirements, architecture, acceptance criteria, code review, testing, approval, and deployment decisions.
 
-- AI-assisted requirements analysis.
-- Architecture and implementation discussions.
-- Code generation and modification.
-- Test generation and debugging assistance.
-- Human review and approval.
-- Verification of generated code.
+**AI tools and models used:**
 
-Explain how technical decisions were evaluated and how AI-generated changes were validated.
+- **Kilo extension on Visual Studio Code**, using model **Nemotron 3.5 Super VL (free)**: used for code generation, modification, implementation discussions, and debugging assistance.
+- **ChatGPT**: used for general instructions and consulting on VPS configuration and deployment.
 
-The objective is to demonstrate responsible AI usage, not to claim that AI independently designed and implemented the application.
+**What was AI-generated vs. human-written:**
+
+- **AI-generated:** code implementation across modules (controllers, services, repositories, routes, validation schemas, middleware, Swagger configuration, tests), architecture decisions, and technical structure. All AI-generated code was reviewed and approved by the human developer before being accepted.
+- **Human-written:** all Git interactions (commits, branches, Pull Requests, merges), architectural decision approval, requirements interpretation, test verification, code review, and deployment decisions. Git was not used autonomously by any AI tool.
+
+**AI-assisted activities:**
+
+- **Requirements analysis:** AI assisted in interpreting and clarifying the technical assessment requirements.
+- **Architecture and implementation discussions:** AI helped define the layered modular monolith structure, technology stack choices (Express, PostgreSQL, Prisma, Zod, Vitest, OpenAPI/Swagger), and API endpoint design.
+- **Code generation and modification:** AI generated the application code, tests, Swagger configuration, and supporting files across users and tasks modules.
+- **Test generation and debugging assistance:** AI assisted in generating unit, integration, and API/HTTP tests and in debugging failures.
+- **Human review and approval:** every AI-generated change was reviewed by the human developer before acceptance; no AI-generated change was committed, pushed, or merged without human approval.
+- **Verification of generated code:** AI-generated code was validated through `tsc --noEmit` (type checking), `eslint src` (linting), and the full Vitest test suite against an isolated test database. Coverage results were recorded honestly, including gaps below the ≥90% target.
+
+**Technical decision evaluation:** AI proposals were evaluated against project scope, maintainability, cost (free tools only), and proportionality to requirements. Distributed architectures, microservices, event-driven patterns, CQRS, and paid services were deliberately rejected as disproportionate to the scope. All technical decisions were ultimately made by the human developer.
+
+The objective is to demonstrate responsible AI usage, not to claim that AI independently designed and implemented the application. AI was an implementation assistant; the human developer was the decision-maker, reviewer, and approver.
 
 ---
 
 ## 15. License
 
-Specify the project's license, if applicable.
+No license has been specified for this project. A license should be selected and added before public release, as the repository is intended to be public (enabling GitHub Free branch protection and a complete demonstration of the development workflow).
