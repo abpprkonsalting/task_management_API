@@ -20,6 +20,8 @@ model User {
   createdAt DateTime @db.Timestamp
   updatedAt DateTime @db.Timestamp
   tasks     Task[]
+
+  @@map("users")
 }
 
 model Task {
@@ -34,4 +36,6 @@ model Task {
 
   @@index([status, responsibleId, createdAt, id])
   @@index([responsibleId])
+
+  @@map("tasks")
 }
