@@ -640,7 +640,19 @@ To be defined in Phase 7 (VPS Deployment).
 
 ### 10.5 VPS Configuration
 
-To be defined in Phase 7 (VPS Deployment).
+Required GitHub Actions secrets (Settings → Secrets and variables → Actions):
+
+| Secret | Description | Example |
+|--------|-------------|---------|
+| `VPS_HOST` | VPS IP address or hostname | `198.51.100.42` |
+| `VPS_PORT` | SSH port on the VPS | `6543` |
+| `VPS_USER` | Dedicated Linux deployment user | `deploy` |
+| `VPS_SSH_KEY` | Private SSH key for VPS access | `-----BEGIN OPENSSH PRIVATE KEY-----...` |
+| `VPS_APP_DIR` | Application directory on the VPS | `/home/deploy/task-management-api` |
+
+Deployment uses these secrets to connect via SSH, pull the latest `master`, install production dependencies, apply Prisma migrations, build, and restart the systemd service.
+
+To be further detailed in Phase 7 (VPS server setup: dedicated user, dedicated database, systemd service, Apache reverse proxy, health endpoint).
 
 ### 10.6 Deployment Verification
 
