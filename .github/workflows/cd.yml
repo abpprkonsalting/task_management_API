@@ -65,4 +65,4 @@ jobs:
             npm ci
             npx prisma generate
             npx prisma migrate deploy
-            # sudo systemctl restart task-management-api
+            sudo systemctl restart task-management-api
