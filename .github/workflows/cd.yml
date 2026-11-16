@@ -50,7 +50,7 @@ jobs:
           port: ${{ secrets.VPS_PORT }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
-          source: "dist/,package.json,package-lock.json,.env,prisma/"
+          source: "dist/,package.json,package-lock.json,prisma/"
           target: "${{ secrets.VPS_APP_DIR }}"
 
       - name: Deploy on VPS
